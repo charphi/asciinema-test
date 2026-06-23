@@ -39,10 +39,6 @@ jobs:
       run: |
         cat << 'EOF' > automate.exp
         #!/usr/bin/expect -f
-        set timeout -1
-        spawn bash --norc --noprofile
-        expect -re ".*"
-        sleep 1
 
         send "echo '# Configure properties...'\r"; expect -re ".*"; sleep 0.8
         send "echo versioning=semver >> heylogs.properties\r"; expect -re ".*"
