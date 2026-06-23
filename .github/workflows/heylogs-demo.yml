@@ -22,11 +22,15 @@ jobs:
         jbang app setup
         jbang app install heylogs@nbbrd
 
-    - run: docker run --rm -v $PWD:/vhs ghcr.io/charmbracelet/vhs demo.tape
+#    - run: docker run --rm -v $PWD:/vhs ghcr.io/charmbracelet/vhs demo.tape
+
+    - name: Install and run VHS and Dependencies
+      run: |
+        brew install vhs ttyd ffmpeg
+        run: vhs < demo.tape
 
     - name: Upload Generated Assets
       uses: actions/upload-artifact@v7
       with:
-        name: heylogs-demo-media
-        path: |
-          demo.gif
+        path: demo.gif
+        archive: false
