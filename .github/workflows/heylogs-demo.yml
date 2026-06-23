@@ -1,0 +1,101 @@
+name: Generate Heylogs Demo Cast and SVG
+
+on:
+  workflow_dispatch: 
+
+jobs:
+  build-heylogs-demo:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v7
+
+    - name: Install System Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y asciinema expect
+        curl -s "https://jbang.dev" | bash
+        echo "$HOME/.jbang/bin" >> $GITHUB_PATH
+
+    - name: Setup Java Environment
+      uses: actions/setup-java@v5
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: '20'
+
+    - name: Install svg-term-cli
+      run: npm install -g svg-term-cli
+
+    - name: Record Interactive Scenario
+      run: |
+        cat << 'EOF' > automate.exp
+        #!/usr/bin/expect -f
+        set timeout -1
+        spawn bash --norc --noprofile
+        expect -re ".*"
+        send "alias heylogs='jbang heylogs@nbbrd'\r"
+        expect -re ".*"
+        sleep 1
+
+        send "echo '# Configure properties...'\r"; expect -re ".*"; sleep 0.8
+        send "echo versioning=semver >> heylogs.properties\r"; expect -re ".*"
+        send "echo tagging=prefix:v >> heylogs.properties\r"; expect -re ".*"
+        sleep 1.2
+        
+        send "echo '# Initialize a new changelog repository...'\r"; expect -re ".*"; sleep 0.8
+        send "heylogs init --project-url https://github.com\r"; expect -re ".*"
+        sleep 1.5
+        
+        send "echo '# Log new changes and features...'\r"; expect -re ".*"; sleep 0.8
+        send "heylogs push -y added -m \"Add support for custom CLI workflows.\"\r"; expect -re ".*"
+        send "heylogs push -y fixed -m \"Fix bug in changelog parser.\"\r"; expect -re ".*"
+        send "heylogs push -y added -m \"Fetch issue #1 from GitHub\"\r"; expect -re ".*"
+        sleep 1.5
+        
+        send "echo '# Verify if the changelog adheres to project rules...'\r"; expect -re ".*"; sleep 0.8
+        send "heylogs check --rule dot-space-link-style:WARN --rule no-empty-group:OFF\r"; expect -re ".*"
+        sleep 1.5
+        
+        send "echo '# Extract the latest release notes section...'\r"; expect -re ".*"; sleep 0.8
+        send "heylogs extract --limit 1 --output CHANGELOG-latest.md\r"; expect -re ".*"
+        sleep 1.2
+        
+        send "echo '# Inject an individual release comment...'\r"; expect -re ".*"; sleep 0.8
+        send "heylogs note -m \"This release introduces advanced CLI scenarios.\"\r"; expect -re ".*"
+        sleep 1.2
+        
+        send "echo '# Build the final 1.0.0 release...'\r"; expect -re ".*"; sleep 0.8
+        send "heylogs release --ref 1.0.0\r"; expect -re ".*"
+        sleep 1.5
+        
+        send "echo '# Export summary as JSON configuration...'\r"; expect -re ".*"; sleep 0.8
+        send "heylogs scan --output summary.json --format json\r"; expect -re ".*"
+        sleep 2.5
+        
+        send "rm heylogs.properties CHANGELOG-latest.md summary.json\r"; expect -re ".*"
+        sleep 0.5
+        
+        send "exit\r"
+        expect eof
+        EOF
+        
+        chmod +x automate.exp
+        script -ec "asciinema rec output.cast -c ./automate.exp" /dev/null
+
+    - name: Convert Cast to Animated SVG
+      run: |
+        svg-term --in output.cast --out output.svg --window --width 90 --height 32
+
+    - name: Upload Generated Assets
+      uses: actions/upload-artifact@v7
+      with:
+        name: heylogs-demo-media
+        path: |
+          output.cast
+          output.svg
