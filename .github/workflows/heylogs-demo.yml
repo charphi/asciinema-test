@@ -11,18 +11,21 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v7
 
-    - name: Install System Dependencies
+    - name: Set up JBang
+      uses: jbangdev/setup-jbang@main
+
+    - name: Trust heylogs catalog
+      run: jbang trust add https://github.com/nbbrd/
+
+    - name: Create heylogs alias
+      run: |
+        jbang app setup
+        jbang app install heylogs@nbbrd
+
+    - name: Install asciinema and expect
       run: |
         sudo apt-get update
-        sudo apt-get install -y asciinema expect
-        curl -s "https://jbang.dev" | bash
-        echo "$HOME/.jbang/bin" >> $GITHUB_PATH
-
-    - name: Setup Java Environment
-      uses: actions/setup-java@v5
-      with:
-        distribution: 'temurin'
-        java-version: '17'
+        sudo apt-get install -y expect asciinema
 
     - name: Setup Node.js
       uses: actions/setup-node@v6
@@ -38,8 +41,6 @@ jobs:
         #!/usr/bin/expect -f
         set timeout -1
         spawn bash --norc --noprofile
-        expect -re ".*"
-        send "alias heylogs='jbang heylogs@nbbrd'\r"
         expect -re ".*"
         sleep 1
 
