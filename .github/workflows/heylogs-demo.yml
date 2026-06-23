@@ -24,6 +24,9 @@ jobs:
 
 #    - run: docker run --rm -v $PWD:/vhs ghcr.io/charmbracelet/vhs demo.tape
 
+    - name: Set up Homebrew
+      uses: Homebrew/actions/setup-homebrew@master
+
     - name: Install and run VHS and Dependencies
       run: |
         brew install vhs ttyd ffmpeg
