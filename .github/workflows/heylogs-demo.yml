@@ -22,7 +22,7 @@ jobs:
         jbang app setup
         jbang app install heylogs@nbbrd
 
-    - uses: charmbracelet/vhs-action@v2
+    - uses: charmbracelet/vhs-action@v2.1.0
       with:
         path: 'demo.tape'
 
